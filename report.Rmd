@@ -1,0 +1,44 @@
+---
+title: "Kernel Density Estimation"
+output: html_document
+abstract: "hello"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+VERY similar structure/content to class activity but more notation, more formal, and obviously no activities
+
+# Introduction
+
+- nonparametric
+- relax assumptions
+- intuition goes here for this type of paper?
+
+
+# Proofs/methods/results/theory?? (not really sure what to call this)
+
+this section is sort of a glorified literature review since we're not introducing anything new. 
+
+## initial KDE results
+
+- discuss Parzen (1962) and Rosenblatt (1956) here: this is the basis of KDE
+
+## Types of kernels
+
+- outline the most common but we'll focus on gaussian
+
+## Bias, Variance, and measures of MSE
+
+- essentially just walk through the proofs, probably through asymptotic MSE
+
+## Bandwidth
+
+- most active field
+- introduce optimization problem
+
+# conclusion
+
+- probably with an eye towards practical applications
