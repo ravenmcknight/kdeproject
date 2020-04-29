@@ -1,0 +1,167 @@
+---
+title: "Kernel Density Estimation (rough outline)"
+author: "Raven McKnight & Kaden Bieger"
+date: "May 2020"
+output: pdf_document
+---
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+set.seed(455)
+```
+
+
+# Introduction
+
+* Nonparametric statistics, a very active field (more and more feasible with modern computing technology)
+* We can relax assumptions about the distribution & normality of our data, which we usually don’t know in practice 
+
+
+## Intution
+
+KDE is a method you've seen before even if you don't know it! The intution behind KDE is similar to the intution behind a simple **histogram**. Histograms can be used to visually approximate the distribution of data. There are a few reasons we want a more sophisticated method, however. First, as the plot below illustrates, histograms are very sensitive to the number and width of bins. Additionally, a histogram provides an excessively local estimate -- there is no "smoothing" between neighboring bins. 
+
+
+```{r}
+set.seed(455)
+simdat <- rnorm(n = 100, mean = 2, sd = 4)
+# fn borrowed from Son Phan
+hist_bins <- function(data, bins) {
+  ggplot(mapping = aes(x = data, y=..density..)) +
+  geom_histogram(bins = bins, fill = "steelblue3") + 
+  ggtitle(sprintf(fmt = "%i bins", bins)) + theme_minimal()
+}
+
+grid.arrange(hist_bins(simdat, 10), 
+             hist_bins(simdat, 20), 
+             hist_bins(simdat, 40), 
+             hist_bins(simdat, 80), nrow=2)
+```
+
+
+If you've ever made a **density plot**, you have even more experience with KDE. Behind the scenes, the ggplot geom `geom_density` employes KDE! It turns out we can set the specific **kernel** and **bandwidth** when we call `geom_density`. 
+
+
+
+
+
+# Kernel Density Estimation
+
+The goal of kernel density estimation to to estimate the PDF of our data without knowing its distribution. We use a **kernel** as a weighting function to smooth our data in order to get this estimate. 
+
+A **kernel** is a probability density function with two additional conditions: it must be non-negative and real-valued. 
+
+
+## Procedure
+
+1. Apply the kernel function to each data point
+
+*plot...*
+ 
+2. Sum the kernel functions
+
+*plot......*
+
+3. Divide by N because each kernel function integrates to one, so your KDE will integrate to one
+
+In math: $$f(x) = \frac{1}{N} \sum_{i=1}^{N} K(x - x_i)$$
+Note the $x - x_i$ centers kernel function on $x_i$
+
+## Bias, Variance, MSE, AMSE, AMISE
+
+This section isn't written but and we're not sure quite how much of this will make it into the class activity. We'll walk through finding the bias, variance, and MSE measures for KDE. Maybe we'll give Bias and Variance and then finding MSE can be an activity. 
+
+# Choosing a Kernel Function
+
+Kernel functions are non-negative, symmetric, and decreasing for all $x > 0$ (because symmetric means increasing for all $x < 0$). Some PDFs we're already familiar with are kernels! Gaussian and rectangular (uniform) are two common kernel choices, though there are many others. The plot below shows kernel density estimates for the same simulated data using four common kernels. In this example, we use a fairly low bandwidth (0.3), to make differences between the kernels clear. 
+
+```{r}
+gaus <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "gaussian", bw = 0.3, color = "pink", size = 1) +
+  ggtitle("Gaussian Kernel")
+
+e <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "epanechnikov", bw = 0.3, color = "pink", size = 1) +
+  ggtitle("Epanechnikov Kernel")
+
+tri <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "triangular", bw = 0.3, color = "pink", size = 1) +
+  ggtitle("Triangular Kernel")
+
+rect <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "rectangular", bw = 0.3, color = "pink", size = 1) +
+  ggtitle("Rectangular Kernel")
+
+grid.arrange(gaus, e, tri, rect, nrow=2)
+```
+
+Choice of kernel doesn't affect end result that much, although there are benefits to some kernels in particular. The Epanechnikov kernel, for example, is MSE optimal. 
+
+# Choosing Bandwidth
+
+The bandwidth is the width of our window -- following the histogram example, this is like the width/number of bins. Bandwidth represented as h
+
+$$f(x) = \frac{1}{Nh} \sum_{i=1}^{N} K(\frac{x - x_i}{h})$$
+
+The larger h is the wider the kernel -- think of as making the difference between x and x_i smaller, the closer x is to an x_i (or multiple x_is) the higher the curve
+
+
+
+Bandwidth is how we control how "smooth" our estimate is. 
+
+```{r}
+gaus25 <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "gaussian", bw = 0.25, color = "pink", size = 1) +
+  ggtitle("Gaussian Kernel, bandwith = 0.25")
+
+gaus50 <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "gaussian", bw = 0.50, color = "pink", size = 1) +
+  ggtitle("Gaussian Kernel, bandwith = 0.50")
+
+gaus75 <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "gaussian", bw = 0.75, color = "pink", size = 1) +
+  ggtitle("Gaussian Kernel, bandwith = 0.75")
+
+gaus1 <- ggplot(mapping = aes(x = simdat, y=..density..)) +
+  geom_histogram(bins = 10, fill = "steelblue3") + theme_minimal() +
+  geom_density(kernel = "gaussian", bw = 1, color = "pink", size = 1) +
+  ggtitle("Gaussian Kernel, bandwith = 1")
+
+grid.arrange(gaus25, gaus50, gaus75, gaus1, nrow=2)
+```
+
+
+## Bandwidth tradeoffs
+
+A small $h$ places more weight on the data, while a large $h$ performs more smoothing. We can use smaller bandwidths when $n$ is larger, particularly when the data has a small range (ie it is tightly packed). Larger $h$ is better when we have less data or more spread out observations. 
+
+There's an analogy here with Bayesian priors -- choosing $h$ lets us choose how much weight we want to give the data. 
+
+## Choosing bandwidth 
+
+* Silverman's Rule of thumb
+* Sheather Jones
+
+# Activities
+
+## Theory
+
+* find the formula for the kernel given data, bandwidth, and kernel (find $\hat{f_h}$). 
+* find the expected value and variance of $\hat{f_h}$.
+* how can we make expected value and variance of $\hat{f_h}$ converge on the expected value and variance of $f$? (how do we change $h$)
+
+## Application
+
+* we'll provide some data (either simulated or a real data set, maybe better to use simulated data so we can compare to true values)
+* plot the data with different kernels & bandwidths -- we might make a super simple shiny app to play with this
+* use Silverman's Rule of Thumb to find bandwidth 
+* find optimal $h$ at a single point using MISE
+* AMISE -- probably just introduce the idea of optimizing AMISE, this is probably too much for class
