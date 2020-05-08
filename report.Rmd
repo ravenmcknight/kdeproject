@@ -18,7 +18,7 @@ library(ggplot2)
 
 nonparametric statistics is a rapidly developing field which represents a large departure from the content covered in a traditional statistics course. Broadly speaking, nonparametric methods allow us to relax assumptions about our data. In a course such as mathematical statistics, we generally assume our data comes from a normal distribution, or at the very least from a distribution with mean $\mu$ and variance $\sigma^2$. nonparametric methods are not based on such parameters.
 
-*Kernel density estimation* is a common technique within the subfield of nonparametric statistics used to estimate probability density functions. In practice, we rarely know much at all about the true distribution of our sampled data. nonparametric methods such as kernel density estimation allow us to bypass assumptions of normality and so on that may be unreasonable to make. 
+
 
 Kernel density estimation was developed seperately by Parzen (1962) and Rosenblatt (1956), giving the method the name "Parsen-Rosenblatt window method" in related fields, such as econometrics. The method has practical applications in many disciplines, some of which we discuss in our conclusion. 
 
@@ -26,7 +26,7 @@ In section 2 of this paper, we build intuition for the function of kernel densit
 
 # Intuition
 
-non-parametric density estimation may sound alien to audiences familiar with parametric statistical methods. However, density estimation is a common step in many exploratory data analyses. THe **histogram** is perhaps the most well-known method for estimating probability density functions. 
+non-parametric density estimation may sound alien to audiences familiar with parametric statistical methods. However, density estimation is a common step in many exploratory data analyses. The **histogram** is perhaps the most well-known method for estimating probability density functions. 
 
 Given $n$ observations, our goal is determine a likely probability distribution for our data. In the case of a histogram, we split our $n$ observations into $k$ "bins" or intervals of equal width. We denote the boundaries of these "bins" as $b_0, b_1, \ldots, b_k$ such that bin $i$ is defined $(b_{i-1}, b_i]$. Then we can estimate the density in bin $i$ by the proportion of observations $n_i$ that fall into the interval $(b_{i-1}, b_i]$. Therefore, the histogram estimate for data generating function $f(x)$ is given 
 
