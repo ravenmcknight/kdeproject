@@ -1,8 +1,13 @@
 ---
 title: "Kernel Density Estimation (rough outline)"
 author: "Raven McKnight & Kaden Bieger"
-date: "May 2020"
-output: pdf_document
+date: "May 9, 2020"
+output:
+  html_document: 
+    theme: readable
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 ```{r}
 library(ggplot2)
@@ -14,11 +19,11 @@ set.seed(455)
 
 # Introduction
 
-* Nonparametric statistics, a very active field (more and more feasible with modern computing technology)
-* We can relax assumptions about the distribution & normality of our data, which we usually don’t know in practice 
+Nonparametric statistics is a rapidly developing field. It is also very different than the content we've covered in class so far! Broadly speaking, nonparametric methods allow us to relax assumptions about our data. We often assume our data comes from a normal distribution, or at the very least from a distribution with mean $\mu$ and variance $\sigma^2$. Nonparametric methods are not based on such parameters.
 
+*Kernel density estimation* (KDE) is a common technique used to estimate probability density functions (PDFs). In practice, we rarely know much at all about the true distribution of our sampled data. KDE allows us to get an estimated PDF without making unreasonable assumptions of our data. 
 
-## Intution
+## Intuition
 
 KDE is a method you've seen before even if you don't know it! The intution behind KDE is similar to the intution behind a simple **histogram**. Histograms can be used to visually approximate the distribution of data. There are a few reasons we want a more sophisticated method, however. First, as the plot below illustrates, histograms are very sensitive to the number and width of bins. Additionally, a histogram provides an excessively local estimate -- there is no "smoothing" between neighboring bins. 
 
@@ -40,9 +45,7 @@ grid.arrange(hist_bins(simdat, 10),
 ```
 
 
-If you've ever made a **density plot**, you have even more experience with KDE. Behind the scenes, the ggplot geom `geom_density` employes KDE! It turns out we can set the specific **kernel** and **bandwidth** when we call `geom_density`. 
-
-
+If you've ever made a **density plot**, you have even more experience with KDE. Behind the scenes, the ggplot geom `geom_density` employes KDE! It turns out we can set the specific **kernel** and **bandwidth** when we call `geom_density`. We'll cover kernels and bandwidths below.
 
 
 
@@ -50,12 +53,12 @@ If you've ever made a **density plot**, you have even more experience with KDE. 
 
 The goal of kernel density estimation to to estimate the PDF of our data without knowing its distribution. We use a **kernel** as a weighting function to smooth our data in order to get this estimate. 
 
-A **kernel** is a probability density function with two additional conditions: it must be non-negative and real-valued. 
+A **kernel** is a probability density function with several additional conditions: first, it must be non-negative and real-valued. A kernel must also be symmetric about 0. Several familiar PDFs, including the Gaussian and Uniform PDFs, meet these requirments. Once we have a kernel selected, we can implement KDE as follows. 
 
 
 ## Procedure
 
-1. Apply the kernel function to each data point
+1. Apply the kernel function to each data point in our sample
 
 *plot...*
  
@@ -63,14 +66,45 @@ A **kernel** is a probability density function with two additional conditions: i
 
 *plot......*
 
-3. Divide by N because each kernel function integrates to one, so your KDE will integrate to one
+3. Divide by $n$ because each kernel function integrates to one, so the resulting KDE will still integrate to one
 
 In math: $$f(x) = \frac{1}{N} \sum_{i=1}^{N} K(x - x_i)$$
 Note the $x - x_i$ centers kernel function on $x_i$
 
-## Bias, Variance, MSE, AMSE, AMISE
 
-This section isn't written but and we're not sure quite how much of this will make it into the class activity. We'll walk through finding the bias, variance, and MSE measures for KDE. Maybe we'll give Bias and Variance and then finding MSE can be an activity. 
+```{r}
+#simulate data, make it impossible to see this code
+set.seed(455)
+asimdat <- rchisq(n = 100, df = 5)
+asimdat <- data.frame(x = asimdat)
+```
+
+**QUESTION:** Consider 100 independent and identically distributed samples from an unknown distribution (the sample is plotted below). Given a bandwidth $h = 0.5$, write the Gaussian kernel density estimator for this sample at $s = 5$. 
+
+```{r}
+ggplot(asimdat, aes(x=x)) +
+  geom_histogram(bins = 15, fill = "steelblue3") +
+  theme_minimal()
+```
+
+Try plotting your calculate kernel density estimate below. Compare to the output of `geom_density`. 
+
+```{r}
+my_est <- function(x){
+  # put your estimator here!
+}
+
+
+ggplot(asimdat, aes(x=x)) +
+  theme_minimal() +
+  geom_density() +   # generic geom_density
+  geom_density(bw = 0.4, kernel = "Gaussian", color = "blue") + # should be closer to your estimator
+ # stat_function(fun = my_est, color = "red") # your estimator!
+  NULL
+```
+
+
+
 
 # Choosing a Kernel Function
 
@@ -100,7 +134,8 @@ rect <- ggplot(mapping = aes(x = simdat, y=..density..)) +
 grid.arrange(gaus, e, tri, rect, nrow=2)
 ```
 
-Choice of kernel doesn't affect end result that much, although there are benefits to some kernels in particular. The Epanechnikov kernel, for example, is MSE optimal. 
+Choice of kernel doesn't affect end result that much, although there are benefits to some kernels in particular. The Epanechnikov kernel, for example, is MSE optimal. For this activity, we'll just use a Gaussian kernel. 
+
 
 # Choosing Bandwidth
 
@@ -145,23 +180,108 @@ A small $h$ places more weight on the data, while a large $h$ performs more smoo
 
 There's an analogy here with Bayesian priors -- choosing $h$ lets us choose how much weight we want to give the data. 
 
-## Choosing bandwidth 
 
-* Silverman's Rule of thumb
-* Sheather Jones
+**QUESTION:** Using the kernel you defined above, plot a KDE estimate using various values for $h$. You can also use the parameter `bw` within a `geom_density`. 
 
-# Activities
 
-## Theory
 
-* find the formula for the kernel given data, bandwidth, and kernel (find $\hat{f_h}$). 
-* find the expected value and variance of $\hat{f_h}$.
-* how can we make expected value and variance of $\hat{f_h}$ converge on the expected value and variance of $f$? (how do we change $h$)
+# Bias, Variance, MSE
 
-## Application
+## Bias
+Naturally, we would like to consider the bias and mean squared error of estimators produced by kernel density estimation. In this section, we outline proofs deriving the expected value, bias, and mean squared error for kernel density estimates. We follow a simplified version of proofs presented in Wasserman (2006). The proof relies on the three properties of kernels described above. 
 
-* we'll provide some data (either simulated or a real data set, maybe better to use simulated data so we can compare to true values)
-* plot the data with different kernels & bandwidths -- we might make a super simple shiny app to play with this
-* use Silverman's Rule of Thumb to find bandwidth 
-* find optimal $h$ at a single point using MISE
-* AMISE -- probably just introduce the idea of optimizing AMISE, this is probably too much for class
+Given observations $x_1, x_2, \ldots, x_n \overset{iid}{\sim} f$, we define the expected value of our estimator as follows: 
+
+$$
+\mathbf{E}[\hat{f}_n(s)] = \mathbf{E}\left[\frac{1}{nh} \displaystyle \sum_{i = 1}^{n} K \left( \frac{x_i - s}{h}\right) \right] = \frac{1}{h}\mathbf{E}\left[K \left( \frac{x - s}{h}\right) \right] = \frac{1}{h} \int K\left( \frac{x - s}{h}\right) f(x) dx
+$$
+
+This first line follows simply from the definition stated above. To solve further, we use $u$ substitution and a 2nd order Taylor expansion. First, we let $u = \frac{x - s}{h}$ and substitute. 
+
+$$
+\mathbf{E}[\hat{f}_n(s)] = \frac{1}{h} \int K\left( u\right) f(hs + u) dx
+$$
+
+next, we apply the 2nd order Taylor expansion for $f(hs + u)$ about $h = 0$. Ommitting several steps of algebra, our Taylor expansion can be written
+
+$$
+\begin{aligned}
+f(hu + s) &=  f(s) + \frac{f'(s)}{1!}(u)(h-0) + \frac{f''(s)}{2!}(u^2)(h-0)^2 + o(h^2) \\
+    &= f(s) + huf'(s) + \frac{h^2u^2}{2}f''(s) + o(h^2)
+\end{aligned}
+$$
+
+where $o(h^2)$ is some function which approaches zero as $h$ approaches infinity. We plug the Taylor expansion into our expected value above and simplify via algebra. 
+
+$$
+\begin{aligned}
+\mathbf{E}[\hat{f}_n(s)] & = \int K(u) \left[f(s) + huf'(s) + \frac{h^2u^2}{2}f''(s) + o(h^2)\right] du \\ \\
+& = f(s)\int K(u) du + hf'(s)\int uK(u) du +  \frac{h^2}{2}f''(s)\int u^2 K(u)du  + o(h^2) \\
+& = f(s) + \frac{h^2}{2}f''(s)\int u^2 K(u)du + o(h^2)
+\end{aligned}
+$$
+
+We can plug this into the definition of bias such that 
+
+$$
+\begin{aligned}
+\textbf{Bias}(\hat{f}_n(s)) &= E[\hat{f}_n(s)] - f(s) = \frac{h^2}{2}f''(s)\int u^2 K(u)du + o(h^2) \\
+    &= \frac{t \cdot h^2}{2}f''(s) + o(h^2)
+\end{aligned}
+$$
+
+where $t = \int u^2 K(u)du$. 
+
+**QUESTION:** What happens to bias as bandwidth $h$ changes? 
+
+## Variance
+First, we plug our estimator into the formula for variance. The following is possible because $K$ is symmetric about zero. 
+
+$$
+\begin{aligned}
+    \mathbf{Var}(\hat{f}_n(s))
+    &=
+    \mathbf{Var} \left(\frac{1}{nh} \displaystyle \sum_{i = 1}^{n} K \left(\frac{x_i - s}{h}\right)\right) \\
+    &= \frac{1}{nh^2} \left(\mathbf{E}\left[ K^2 \left( \frac{x - s}{h}\right) \right] - \mathbf{E}\left[ K \left( \frac{x - s}{h}\right)\right]^2\right)\\
+    &\leq
+    \frac{1}{nh^2} \mathbf{E}\left[ K^2 \left( \frac{x - s}{h}\right) \right] \\
+    &=
+    \frac{1}{nh^2} \int K^2 \left( \frac{x - s}{h}\right)f(x) dx
+  \end{aligned}
+$$
+
+As above, we substitute $u = \frac{x-s}{h}$ and plug in a 1st order Taylor expansion of $f(hu + s)$. 
+
+$$
+\begin{aligned}
+    \mathbf{Var}(\hat{f}_n(s))
+    &\leq
+    \frac{1}{nh^2} \int K^2(u)f(hu + s)hdu \\
+    &=
+    \frac{1}{nh} \int K^2(u)f(hu + s)du \\
+    &=
+    \frac{1}{nh} \int K^2(u)[f(s) + huf'(s) + o(h)]du  \\
+    &=
+    \frac{1}{nh} \bigg(f(s)\int K^2(u) du + hf'(s)\int uK^2(u) du + o(h)\bigg) \\
+    \mathbf{Var}(\hat{f}_n(s)) &\leq \frac{f(s)}{nh}\int K^2(u) du + o\bigg(\frac{1}{nh}\bigg) \\
+    &=
+    \frac{z}{nh}f(s) + o\bigg(\frac{1}{nh}\bigg)
+  \end{aligned}
+$$
+
+where $z = \int K^2(u) du$.
+
+**QUESTION:** What happens to variance as $h$ changes? As $n$ changes?
+
+**QUESTION:** Given the Bias and Variance above, find the Mean Squared Error of our estimator. Recall that the formula for MSE is ()
+
+## Asymptotic MSE
+
+Given the MSE we derived above, we can see that the Asymptotic MSE (AMSE) is ____. Often, we use the AMSE to optimize $h$ at a given point. 
+
+**QUESTION:** Optimize $h$ at x = ???. How might we optimize $h$ across the entire sample?
+
+## An Open Question: AMISE
+
+A common method for optimizing $h$ across an entire distribution is using the asymptotic mean integrated square error (AMISE). 
+
