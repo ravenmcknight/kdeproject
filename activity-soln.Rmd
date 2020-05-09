@@ -193,15 +193,15 @@ ggplot(asimdat, aes(x=x)) +
 Try plotting your calculate kernel density estimate below. Compare to the output of `geom_density`. 
 
 ```{r}
-my_est <- function(x, s = 5, h = 0.5){
+my_est <- function(x, xi = 5, h = 0.5){
   # put your estimate here!
-   1/((100 * h) *sqrt(2*pi)) * exp(-1/2 * ((s - x)/h)^2) 
+   1/((100 * h) *sqrt(2*pi)) * exp(-1/2 * ((x - xi)/h)^2) 
 }
 
 
 # to get the whole kde estimate, sum my_est over each s
 kern <- matrix(ncol = 100, nrow = 100)
-kde <- function(x, s = 5, h = 0.5){
+kde <- function(x, x_i = 5, h = 0.5){
   for(i in 1:100){
     kern[i, ] <- my_est(x = asimdat$x, s = asimdat$x[i], h = h)
   }
