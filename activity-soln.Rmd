@@ -203,7 +203,7 @@ my_est <- function(x, xi = 5, h = 0.5){
 kern <- matrix(ncol = 100, nrow = 100)
 kde <- function(x, x_i = 5, h = 0.5){
   for(i in 1:100){
-    kern[i, ] <- my_est(x = asimdat$x, s = asimdat$x[i], h = h)
+    kern[i, ] <- my_est(x = asimdat$x, x_i = asimdat$x[i], h = h)
   }
   colSums(kern)
 }
